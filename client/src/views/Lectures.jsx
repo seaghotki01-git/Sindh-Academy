@@ -130,12 +130,12 @@ export const Lectures = () => {
       </section>
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
           <div className="skeleton-box" style={{ height: '350px' }} />
           <div className="skeleton-box" style={{ height: '350px' }} />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', alignItems: 'start' }}>
           {/* Lectures Column */}
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h3 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', fontFamily: 'var(--font-heading)' }}>
