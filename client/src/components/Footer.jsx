@@ -54,10 +54,10 @@ export const Footer = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <h4 style={{ color: 'var(--text-primary)', fontSize: '16px' }}>Academy Location</h4>
           <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-            📍 Eidgah Road, near Govt Degree College,<br />
+            📍 Sindh Public School Near National Bank Devri Road Ghotki,<br />
             Ghotki, Sindh, Pakistan.<br /><br />
-            📞 Support: +92 301 2345678<br />
-            ✉️ admin@sindhacademy.edu.pk
+            📞 Support: +92 300 93140648<br />
+            ✉️ seaghotki01@gmail.com
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export const Footer = () => {
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Connect with Sindh Educational Academy on social networks:</p>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <a 
-              href="https://facebook.com/sindhacademy" 
+              href="https://web.facebook.com/sindhedu.ghotki/" 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{
@@ -82,24 +82,9 @@ export const Footer = () => {
             >
               Facebook
             </a>
+           
             <a 
-              href="https://instagram.com/sindhacademy" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                background: 'rgba(236, 72, 153, 0.15)',
-                color: '#ec4899',
-                textDecoration: 'none'
-              }}
-            >
-              Instagram
-            </a>
-            <a 
-              href="https://tiktok.com/@sindhacademy" 
+              href="https://www.tiktok.com/@sindh.educational" 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{
@@ -115,7 +100,7 @@ export const Footer = () => {
               TikTok
             </a>
             <a 
-              href="https://wa.me/923012345678" 
+              href="https://wa.me/923009314064" 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{

@@ -107,7 +107,7 @@ export const Home = () => {
             Attempt Free Mocks
           </Link>
           <a 
-            href="https://wa.me/923012345678" 
+            href="https://wa.me/923009314064" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="btn-secondary" 
@@ -128,8 +128,8 @@ export const Home = () => {
 
         <div style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'flex', gap: '24px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
           <span>📍 Eidgah Road, Ghotki</span>
-          <span>📞 Support Line: +92 301 2345678</span>
-          <span>✉️ support@sindhacademy.edu.pk</span>
+          <span>📞 Support Line: +92 300 9314064</span>
+          <span>✉️ seaghotki01@gmail.com</span>
         </div>
       </header>
 
