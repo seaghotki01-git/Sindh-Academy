@@ -86,7 +86,7 @@ export const Contact = () => {
           </div>
 
           <a
-            href="https://wa.me/923012345678"
+            href="https://wa.me/923009314064"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-primary"
