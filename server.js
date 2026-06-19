@@ -72,10 +72,9 @@ app.use('/api/v1/exams', require('./routes/examRoutes'));
 app.use('/api/v1/resources', require('./routes/lectureRoutes'));
 app.use('/api/v1/admin', require('./routes/adminRoutes'));
 
-// Serve static assets in production (only if client build exists)
-const distPath = path.join(__dirname, 'client/dist');
-if (process.env.NODE_ENV === 'production' && require('fs').existsSync(distPath)) {
-  app.use(express.static(distPath));
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client/dist')));
   
   app.get('*', (req, res) => {
     // Skip API routes so they don't get intercepted by catch-all
@@ -85,7 +84,7 @@ if (process.env.NODE_ENV === 'production' && require('fs').existsSync(distPath))
     res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html'));
   });
 } else {
-  // Root route for initial verification in development or API-only deployment
+  // Root route for initial verification in development
   app.get('/', (req, res) => {
     res.json({ success: true, message: 'Sindh Educational Academy API Active.' });
   });
