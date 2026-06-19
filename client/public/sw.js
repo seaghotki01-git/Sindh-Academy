@@ -39,33 +39,26 @@ self.addEventListener('fetch', (event) => {
   // Skip API calls so they are never served stale from this simple cache
   if (event.request.url.includes('/api/')) return;
 
-  // For navigation requests, respond with the cached index.html (SPA entry point)
   const isNavigation = event.request.mode === 'navigate' || 
                        (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'));
                        
   if (isNavigation) {
     event.respondWith(
-      caches.match('/index.html')
-        .then((cachedResponse) => {
-          if (cachedResponse) return cachedResponse;
-          return caches.match('/');
-        })
-        .then((cachedResponse) => {
-          return cachedResponse || fetch(event.request);
-        })
+      fetch(event.request)
         .catch(() => {
-          return fetch(event.request);
+          // If offline/network fails, serve cached index.html or root
+          return caches.match('/index.html')
+            .then((cachedResponse) => {
+              return cachedResponse || caches.match('/');
+            });
         })
     );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         // Cache newly fetched assets dynamically
         if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
@@ -74,9 +67,10 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return response;
-      }).catch(() => {
-        // Fallback or ignore
-      });
-    })
+      })
+      .catch(() => {
+        // Fallback to cache if offline/network fails
+        return caches.match(event.request);
+      })
   );
 });
