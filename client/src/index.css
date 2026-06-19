@@ -361,6 +361,27 @@ h4, h5, h6 {
   }
 }
 
+/* Smooth theme transitions for core text, panels, and input fields */
+body, h1, h2, h3, h4, h5, h6, p, span, .glass-panel, .form-input, .btn-primary, .btn-secondary {
+  transition: color 0.4s ease, background 0.4s ease, background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+/* Page entrance slide-up fade animations */
+.slide-up-fade {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ==========================================
    MOBILE & TABLET RESPONSIVE SYSTEM
    ========================================== */
@@ -506,6 +527,24 @@ h4, h5, h6 {
     -webkit-overflow-scrolling: touch;
     width: 100%;
     margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Stack small cards and list items on narrow mobile screens */
+  .glass-panel div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"],
+  .glass-panel div[style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  
+  .glass-panel div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"] button,
+  .glass-panel div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"] a,
+  .glass-panel div[style*="display: flex"][style*="justify-content: space-between"] button,
+  .glass-panel div[style*="display: flex"][style*="justify-content: space-between"] a {
+    width: 100% !important;
+    text-align: center !important;
   }
 }
 
