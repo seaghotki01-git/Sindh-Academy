@@ -17,6 +17,9 @@ connectDB();
 
 const app = express();
 
+// Trust reverse proxy for rate limiting (Render, Heroku, etc.)
+app.set('trust proxy', 1);
+
 // Set security headers
 app.use(
   helmet({
