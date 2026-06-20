@@ -56,7 +56,7 @@ export const Footer = () => {
           <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
             📍 Sindh Public School Near National Bank Devri Road Ghotki,<br />
             Ghotki, Sindh, Pakistan.<br /><br />
-            📞 Support: +92 300 93140648<br />
+            📞 Support: +92 300 9314064<br />
             ✉️ seaghotki01@gmail.com
           </p>
         </div>
@@ -66,10 +66,10 @@ export const Footer = () => {
           <h4 style={{ color: 'var(--text-primary)', fontSize: '16px' }}>Follow Us</h4>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Connect with Sindh Educational Academy on social networks:</p>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <a 
-              href="https://web.facebook.com/sindhedu.ghotki/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://web.facebook.com/sindhedu.ghotki/"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 padding: '8px 16px',
                 borderRadius: '8px',
@@ -82,11 +82,11 @@ export const Footer = () => {
             >
               Facebook
             </a>
-           
-            <a 
-              href="https://www.tiktok.com/@sindh.educational" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+
+            <a
+              href="https://www.tiktok.com/@sindh.educational"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 padding: '8px 16px',
                 borderRadius: '8px',
@@ -99,10 +99,10 @@ export const Footer = () => {
             >
               TikTok
             </a>
-            <a 
-              href="https://wa.me/923009314064" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://wa.me/923009314064"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 padding: '8px 16px',
                 borderRadius: '8px',

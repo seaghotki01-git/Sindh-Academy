@@ -236,6 +236,17 @@ export const Home = () => {
             </p>
           </div>
 
+          <div className="glass-panel hover-card-3d hover-glow-gold" style={{ padding: '35px 25px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', transition: 'var(--transition-smooth)' }}>
+            <img src="/assests/english-instructor.png" alt="Prof. Shahnawaz Mirani" style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid #f59e0b' }} />
+            <div>
+              <h4 style={{ fontSize: '18px', margin: 0 }}>Prof. Shahnawaz Mirani</h4>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>English Specialist</span>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
+              Expert in English grammar patterns, comprehension structures, and vocabulary building strategies for entrance test success.
+            </p>
+          </div>
+
         </div>
       </section>
 
