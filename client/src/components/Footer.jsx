@@ -43,10 +43,11 @@ export const Footer = () => {
           <h4 style={{ color: 'var(--text-primary)', fontSize: '16px' }}>Quick Navigation</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
             <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Home</Link>
-            <a href="/#about" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>About Academy</a>
-            <a href="/#demo" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Video Lectures</a>
-            <a href="/#reviews" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Success Stories</a>
-            <a href="/#contact" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Contact Us</a>
+            <Link to="/about" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>About Academy</Link>
+            <Link to="/lectures" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Video Lectures</Link>
+            <Link to="/mock-tests" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Mock Assessments</Link>
+            <Link to="/search-mcqs" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Search MCQs</Link>
+            <Link to="/contact" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Contact Us</Link>
           </div>
         </div>
 

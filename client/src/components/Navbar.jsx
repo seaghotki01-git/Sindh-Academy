@@ -83,6 +83,9 @@ export const Navbar = () => {
         <Link to="/lectures" style={getLinkStyle('/lectures')}>
           Lectures
         </Link>
+        <Link to="/mock-tests" style={getLinkStyle('/mock-tests')}>
+          Mock Tests
+        </Link>
         <Link to="/search-mcqs" style={getLinkStyle('/search-mcqs')}>
           Search MCQs
         </Link>
@@ -201,6 +204,9 @@ export const Navbar = () => {
         </Link>
         <Link to="/lectures" onClick={closeMobileMenu} style={getLinkStyle('/lectures')}>
           Lectures
+        </Link>
+        <Link to="/mock-tests" onClick={closeMobileMenu} style={getLinkStyle('/mock-tests')}>
+          Mock Tests
         </Link>
         <Link to="/search-mcqs" onClick={closeMobileMenu} style={getLinkStyle('/search-mcqs')}>
           Search MCQs
