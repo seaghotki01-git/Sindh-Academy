@@ -5145,6 +5145,7 @@ const AdminDashboard = ({ authFetch }) => {
             </div>
           </div>
         </div>
+      )}
       {/* Pop up Receipt Viewer Box */}
       {activeReceiptUrl && (
         <div style={{
