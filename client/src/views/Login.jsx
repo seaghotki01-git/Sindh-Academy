@@ -227,12 +227,10 @@ export const Login = () => {
         </form>
 
         <div style={{ textAlign: 'center', fontSize: '14px', color: 'var(--text-secondary)' }}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          Don't have an account?{' '}
           <span
             onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-              setSuccess('');
+              navigate('/register');
             }}
             style={{
               color: 'var(--accent)',
@@ -241,7 +239,7 @@ export const Login = () => {
               textDecoration: 'underline'
             }}
           >
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            Sign Up
           </span>
         </div>
       </div>

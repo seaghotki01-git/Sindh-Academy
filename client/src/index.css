@@ -548,4 +548,38 @@ body, h1, h2, h3, h4, h5, h6, p, span, .glass-panel, .form-input, .btn-primary, 
   }
 }
 
+/* Responsive Grid Utility Classes */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.responsive-grid-1-15 {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 30px;
+}
+
+.responsive-grid-1-2 {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 30px;
+}
+
+@media (max-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .responsive-grid-1-15 {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .responsive-grid-1-2 {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+}
+
+
 

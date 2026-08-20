@@ -43,6 +43,47 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  fatherName: {
+    type: String,
+    default: ''
+  },
+  waNumber: {
+    type: String,
+    default: ''
+  },
+  city: {
+    type: String,
+    default: ''
+  },
+  religion: {
+    type: String,
+    default: ''
+  },
+  fatherNumber: {
+    type: String,
+    default: ''
+  },
+  planName: {
+    type: String,
+    enum: ['coaching', 'mdcat/ecat'],
+    default: 'mdcat/ecat'
+  },
+  paymentMethod: {
+    type: String,
+    default: ''
+  },
+  transactionId: {
+    type: String,
+    default: ''
+  },
+  receiptImage: {
+    type: String,
+    default: null
+  },
+  uploadedAt: {
+    type: Date,
+    default: null
+  },
   weakTopics: [
     {
       topic: String,

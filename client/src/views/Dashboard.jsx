@@ -411,7 +411,7 @@ const StudentDashboard = ({ user, authFetch }) => {
 
   if (loading) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px' }}>
+      <div className="responsive-grid-1-2">
         <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="skeleton skeleton-title" style={{ width: '40%' }}></div>
           <div className="skeleton skeleton-text" style={{ width: '90%' }}></div>
@@ -531,7 +531,7 @@ const StudentDashboard = ({ user, authFetch }) => {
       )}
 
       {(!user.isPaid || subTab === 'overview') && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px', alignItems: 'start' }}>
+        <div className="responsive-grid-1-2">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1235,7 +1235,7 @@ const StudentDashboard = ({ user, authFetch }) => {
   );
 };
 
-const ReceiptThumbnail = ({ challanId, authFetch, onClick }) => {
+const ReceiptThumbnail = ({ challanId, studentId, authFetch, onClick }) => {
   const [imgUrl, setImgUrl] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -1243,7 +1243,10 @@ const ReceiptThumbnail = ({ challanId, authFetch, onClick }) => {
     let active = true;
     const fetchThumb = async () => {
       try {
-        const res = await authFetch(`/api/v1/billing/receipt/${challanId}`);
+        const fetchUrl = studentId 
+          ? `/api/v1/admin/registration-receipt/${studentId}`
+          : `/api/v1/billing/receipt/${challanId}`;
+        const res = await authFetch(fetchUrl);
         if (!res.ok) throw new Error('Not found');
         const blob = await res.blob();
         if (active) {
@@ -1258,7 +1261,7 @@ const ReceiptThumbnail = ({ challanId, authFetch, onClick }) => {
     return () => {
       active = false;
     };
-  }, [challanId, authFetch]);
+  }, [challanId, studentId, authFetch]);
 
   if (loading) return <div style={{ width: '40px', height: '40px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }} />;
   if (!imgUrl) return <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>No Slip</span>;
@@ -1307,40 +1310,87 @@ const ClerkDashboard = ({ authFetch }) => {
   const [revAvatar, setRevAvatar] = useState('student1');
   const [revMsg, setRevMsg] = useState('');
 
-  const loadChallans = async () => {
+  // Pending student registrations states
+  const [pendingStudents, setPendingStudents] = useState([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  const loadAllClerkData = async () => {
     try {
-      const res = await authFetch('/api/v1/billing/challans');
-      const data = await res.json();
-      if (data.success) setChallans(data.challans);
+      const [challansRes, studentsRes, reviewsRes] = await Promise.all([
+        authFetch('/api/v1/billing/challans').catch(() => null),
+        authFetch('/api/v1/auth/students').catch(() => null),
+        authFetch('/api/v1/resources/reviews').catch(() => null)
+      ]);
+      const [challansData, studentsData, reviewsData] = await Promise.all([
+        challansRes ? challansRes.json().catch(() => null) : null,
+        studentsRes ? studentsRes.json().catch(() => null) : null,
+        reviewsRes ? reviewsRes.json().catch(() => null) : null
+      ]);
+      if (challansData && challansData.success) setChallans(challansData.challans);
+      if (studentsData && studentsData.success) setStudents(studentsData.students);
+      if (reviewsData && reviewsData.success) setReviews(reviewsData.reviews);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const loadAllStudents = async () => {
+  const loadPendingStudents = async () => {
+    setPendingLoading(true);
     try {
-      const res = await authFetch('/api/v1/auth/students');
+      const res = await authFetch('/api/v1/admin/pending-students');
       const data = await res.json();
-      if (data.success) setStudents(data.students);
+      if (data.success) {
+        setPendingStudents(data.pending);
+      }
     } catch (err) {
       console.error(err);
+    } finally {
+      setPendingLoading(false);
     }
   };
 
-  const loadReviews = async () => {
+  const handleApproveStudent = async (id) => {
+    if (!window.confirm('Are you sure you want to approve this student?')) return;
     try {
-      const res = await authFetch('/api/v1/resources/reviews');
+      const res = await authFetch(`/api/v1/admin/approve-student/${id}`, {
+        method: 'PUT'
+      });
       const data = await res.json();
-      if (data.success) setReviews(data.reviews);
+      if (data.success) {
+        alert('Student approved successfully.');
+        loadPendingStudents();
+        loadAllClerkData();
+      } else {
+        alert(data.message || 'Failed to approve student.');
+      }
     } catch (err) {
       console.error(err);
+      alert('Error approving student.');
+    }
+  };
+
+  const handleRejectStudent = async (id) => {
+    if (!window.confirm('Are you sure you want to reject and delete this registration?')) return;
+    try {
+      const res = await authFetch(`/api/v1/admin/reject-student/${id}`, {
+        method: 'PUT'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Student registration rejected and deleted.');
+        loadPendingStudents();
+      } else {
+        alert(data.message || 'Failed to reject student.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error rejecting student.');
     }
   };
 
   useEffect(() => {
-    loadChallans();
-    loadAllStudents();
-    loadReviews();
+    loadAllClerkData();
+    loadPendingStudents();
   }, []);
 
   const handleAddReview = async (e) => {
@@ -1447,7 +1497,7 @@ const ClerkDashboard = ({ authFetch }) => {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px', alignItems: 'start' }}>
+    <div className="responsive-grid-1-2">
       
       {/* Left Column: Student Lookup & Desk Invoicing */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -1608,6 +1658,13 @@ const ClerkDashboard = ({ authFetch }) => {
             style={{ padding: '8px 16px', fontSize: '13px' }}
           >
             Payment Verification Queue ({challans.filter(c => c.status === 'uploaded').length})
+          </button>
+          <button
+            onClick={() => setRightTab('pending')}
+            className={rightTab === 'pending' ? 'btn-primary' : 'btn-secondary'}
+            style={{ padding: '8px 16px', fontSize: '13px' }}
+          >
+            Pending Registrations ({pendingStudents.length})
           </button>
           <button
             onClick={() => setRightTab('reviews')}
@@ -1777,7 +1834,7 @@ const ClerkDashboard = ({ authFetch }) => {
               </p>
             )}
 
-            <form onSubmit={handleAddReview} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <form onSubmit={handleAddReview} className="responsive-grid" style={{ gap: '15px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <div className="form-group">
                 <label style={{ fontSize: '12px' }}>Student Name</label>
                 <input
@@ -1868,6 +1925,87 @@ const ClerkDashboard = ({ authFetch }) => {
             </div>
           </div>
         )}
+
+        {rightTab === 'pending' && (
+          <div>
+            <h3>Pending Student Profiles Queue</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px' }}>
+              Verify student profile metadata and transaction proofs before approving their premium access.
+            </p>
+
+            {pendingStudents.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>No pending registrations found.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginTop: '10px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                      <th style={{ padding: '12px' }}>Name</th>
+                      <th style={{ padding: '12px' }}>Father's Name</th>
+                      <th style={{ padding: '12px' }}>Contact Details</th>
+                      <th style={{ padding: '12px' }}>City & Religion</th>
+                      <th style={{ padding: '12px' }}>Plan Details</th>
+                      <th style={{ padding: '12px' }}>Receipt / Trx ID</th>
+                      <th style={{ padding: '12px' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody style={{ fontSize: '13px' }}>
+                    {pendingStudents.map((s) => (
+                      <tr key={s._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>
+                          <div>{s.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{s.email}</div>
+                        </td>
+                        <td style={{ padding: '12px' }}>{s.fatherName || '-'}</td>
+                        <td style={{ padding: '12px' }}>
+                          <div>WA: {s.waNumber || '-'}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Father: {s.fatherNumber || '-'}</div>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <div>{s.city || '-'}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{s.religion || '-'}</div>
+                        </td>
+                        <td style={{ padding: '12px', textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: 'var(--gold)' }}>
+                          {s.planName || 'mdcat/ecat'}
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <div>Trx: {s.transactionId || 'N/A'}</div>
+                          {s.receiptImage ? (
+                            <ReceiptThumbnail
+                              studentId={s._id}
+                              authFetch={authFetch}
+                              onClick={(url) => setActiveReceiptUrl({ url, id: s._id, isRegistrationReceipt: true })}
+                            />
+                          ) : (
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>No file proof</div>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => handleApproveStudent(s._id)}
+                              className="btn-primary"
+                              style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--success)', borderColor: 'var(--success)' }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectStudent(s._id)}
+                              className="btn-secondary"
+                              style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Pop up Receipt Viewer Box */}
@@ -1921,28 +2059,53 @@ const ClerkDashboard = ({ authFetch }) => {
               <img src={activeReceiptUrl.url} alt="receipt proof" style={{ maxWidth: '100%', maxHeight: '430px', objectFit: 'contain', borderRadius: '8px' }} />
             </div>
             
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '10px' }}>
-              <button
-                onClick={() => {
-                  handleVerify(activeReceiptUrl.id, 'rejected');
-                  setActiveReceiptUrl(null);
-                }}
-                className="btn-secondary"
-                style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '10px 20px', cursor: 'pointer' }}
-              >
-                Reject Payment
-              </button>
-              <button
-                onClick={() => {
-                  handleVerify(activeReceiptUrl.id, 'verified');
-                  setActiveReceiptUrl(null);
-                }}
-                className="btn-primary"
-                style={{ background: 'var(--success)', padding: '10px 20px', cursor: 'pointer' }}
-              >
-                Approve & Enroll Student
-              </button>
-            </div>
+            {activeReceiptUrl.isRegistrationReceipt ? (
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button
+                  onClick={() => {
+                    handleRejectStudent(activeReceiptUrl.id);
+                    setActiveReceiptUrl(null);
+                  }}
+                  className="btn-secondary"
+                  style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Reject & Remove
+                </button>
+                <button
+                  onClick={() => {
+                    handleApproveStudent(activeReceiptUrl.id);
+                    setActiveReceiptUrl(null);
+                  }}
+                  className="btn-primary"
+                  style={{ background: 'var(--success)', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Approve Student
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button
+                  onClick={() => {
+                    handleVerify(activeReceiptUrl.id, 'rejected');
+                    setActiveReceiptUrl(null);
+                  }}
+                  className="btn-secondary"
+                  style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Reject Payment
+                </button>
+                <button
+                  onClick={() => {
+                    handleVerify(activeReceiptUrl.id, 'verified');
+                    setActiveReceiptUrl(null);
+                  }}
+                  className="btn-primary"
+                  style={{ background: 'var(--success)', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Approve & Enroll Student
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -3748,31 +3911,186 @@ const AdminDashboard = ({ authFetch }) => {
     }
   };
 
+  // Pending student registrations states
+  const [pendingStudents, setPendingStudents] = useState([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [activeReceiptUrl, setActiveReceiptUrl] = useState(null);
+
+  // Payment methods configuration states
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [pmMsg, setPmMsg] = useState('');
+  const [pmName, setPmName] = useState('');
+  const [pmHolder, setPmHolder] = useState('');
+  const [pmNumber, setPmNumber] = useState('');
+  const [pmAmount, setPmAmount] = useState(5000);
+  const [pmDetails, setPmDetails] = useState('');
+
+  const loadPendingStudents = async () => {
+    setPendingLoading(true);
+    try {
+      const res = await authFetch('/api/v1/admin/pending-students');
+      const data = await res.json();
+      if (data.success) {
+        setPendingStudents(data.pending);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  const handleApproveStudent = async (id) => {
+    if (!window.confirm('Are you sure you want to approve this student?')) return;
+    try {
+      const res = await authFetch(`/api/v1/admin/approve-student/${id}`, {
+        method: 'PUT'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Student approved successfully.');
+        loadPendingStudents();
+        loadAllAdminData();
+      } else {
+        alert(data.message || 'Failed to approve student.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error approving student.');
+    }
+  };
+
+  const handleRejectStudent = async (id) => {
+    if (!window.confirm('Are you sure you want to reject and delete this registration?')) return;
+    try {
+      const res = await authFetch(`/api/v1/admin/reject-student/${id}`, {
+        method: 'PUT'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Student registration rejected and deleted.');
+        loadPendingStudents();
+      } else {
+        alert(data.message || 'Failed to reject student.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error rejecting student.');
+    }
+  };
+
+  const loadPaymentMethods = async () => {
+    try {
+      const res = await authFetch('/api/v1/admin/payment-methods');
+      const data = await res.json();
+      if (data.success) {
+        setPaymentMethods(data.methods);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreatePaymentMethod = async (e) => {
+    e.preventDefault();
+    setPmMsg('');
+    try {
+      const res = await authFetch('/api/v1/admin/payment-methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: pmName,
+          accountHolderName: pmHolder,
+          accountNumber: pmNumber,
+          amount: Number(pmAmount),
+          extraDetails: pmDetails
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPmMsg('Payment method added successfully.');
+        setPmName('');
+        setPmHolder('');
+        setPmNumber('');
+        setPmAmount(5000);
+        setPmDetails('');
+        loadPaymentMethods();
+      } else {
+        setPmMsg(data.message || 'Failed to create payment method.');
+      }
+    } catch (err) {
+      console.error(err);
+      setPmMsg('Error creating payment method.');
+    }
+  };
+
+  const handleTogglePaymentMethod = async (id, currentActive) => {
+    try {
+      const res = await authFetch(`/api/v1/admin/payment-methods/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentActive })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadPaymentMethods();
+      } else {
+        alert(data.message || 'Failed to update payment method.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeletePaymentMethod = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this payment method?')) return;
+    try {
+      const res = await authFetch(`/api/v1/admin/payment-methods/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadPaymentMethods();
+      } else {
+        alert(data.message || 'Failed to delete payment method.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const loadAllAdminData = async () => {
     try {
-      const statsRes = await authFetch('/api/v1/admin/stats');
-      const statsData = await statsRes.json();
-      if (statsData.success) setStats(statsData.stats);
+      const [statsRes, usersRes, logsRes, analyticsRes, reviewsRes, examsRes, pendingRes, pmsRes] = await Promise.all([
+        authFetch('/api/v1/admin/stats').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/admin/users').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/admin/logs').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/admin/analytics/grades').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/resources/reviews').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/exams').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/admin/pending-students').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/admin/payment-methods').catch(e => { console.error(e); return null; })
+      ]);
 
-      const usersRes = await authFetch('/api/v1/admin/users');
-      const usersData = await usersRes.json();
-      if (usersData.success) setUsers(usersData.users);
+      const [statsData, usersData, logsData, analyticsData, reviewsData, examsData, pendingData, pmsData] = await Promise.all([
+        statsRes ? statsRes.json().catch(() => null) : null,
+        usersRes ? usersRes.json().catch(() => null) : null,
+        logsRes ? logsRes.json().catch(() => null) : null,
+        analyticsRes ? analyticsRes.json().catch(() => null) : null,
+        reviewsRes ? reviewsRes.json().catch(() => null) : null,
+        examsRes ? examsRes.json().catch(() => null) : null,
+        pendingRes ? pendingRes.json().catch(() => null) : null,
+        pmsRes ? pmsRes.json().catch(() => null) : null
+      ]);
 
-      const logsRes = await authFetch('/api/v1/admin/logs');
-      const logsData = await logsRes.json();
-      if (logsData.success) setLogs(logsData.logs);
-
-      const analyticsRes = await authFetch('/api/v1/admin/analytics/grades');
-      const analyticsData = await analyticsRes.json();
-      if (analyticsData.success) setAnalytics(analyticsData.analytics);
-
-      const reviewsRes = await authFetch('/api/v1/resources/reviews');
-      const reviewsData = await reviewsRes.json();
-      if (reviewsData.success) setReviews(reviewsData.reviews);
-
-      const examsRes = await authFetch('/api/v1/exams');
-      const examsData = await examsRes.json();
-      if (examsData.success) setExams(examsData.exams);
+      if (statsData && statsData.success) setStats(statsData.stats);
+      if (usersData && usersData.success) setUsers(usersData.users);
+      if (logsData && logsData.success) setLogs(logsData.logs);
+      if (analyticsData && analyticsData.success) setAnalytics(analyticsData.analytics);
+      if (reviewsData && reviewsData.success) setReviews(reviewsData.reviews);
+      if (examsData && examsData.success) setExams(examsData.exams);
+      if (pendingData && pendingData.success) setPendingStudents(pendingData.pending);
+      if (pmsData && pmsData.success) setPaymentMethods(pmsData.methods);
     } catch (e) {
       console.error(e);
     }
@@ -3865,6 +4183,12 @@ const AdminDashboard = ({ authFetch }) => {
       <div style={{ display: 'flex', gap: '15px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px', flexWrap: 'wrap' }}>
         <button onClick={() => setTab('stats')} className={tab === 'stats' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px' }}>
           Overview & Telemetry
+        </button>
+        <button onClick={() => setTab('pending')} className={tab === 'pending' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px', background: 'rgba(245, 158, 11, 0.12)', color: 'var(--warning)' }}>
+          Pending Registrations ({pendingStudents.length})
+        </button>
+        <button onClick={() => setTab('payments-config')} className={tab === 'payments-config' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+          Payment Settings CRUD
         </button>
         <button onClick={() => setTab('users')} className={tab === 'users' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px' }}>
           User Accounts CRUD
@@ -4034,7 +4358,7 @@ const AdminDashboard = ({ authFetch }) => {
 
       {/* 3. MOCK GRADE ANALYTICS */}
       {tab === 'analytics' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '30px', alignItems: 'start' }}>
+        <div className="responsive-grid-1-15">
           
           {/* SVG Telemetry Chart */}
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -4182,7 +4506,7 @@ const AdminDashboard = ({ authFetch }) => {
                   <div key={log._id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '15px', borderRadius: '10px', fontSize: '13px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>[{log.action}]</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(log.createdAt).toLocaleString()}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(log.timestamp || log.createdAt).toLocaleString()}</span>
                     </div>
                     <p style={{ marginTop: '5px' }}>
                       Operator: <strong>{log.operatorId ? `${log.operatorId.name} (${log.operatorId.role})` : 'System'}</strong>
@@ -4218,7 +4542,7 @@ const AdminDashboard = ({ authFetch }) => {
       )}
       {/* 5. SUCCESS STORIES (REVIEWS) */}
       {tab === 'reviews' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', alignItems: 'start' }}>
+        <div className="responsive-grid">
           {/* Create Review Form */}
           <div className="glass-panel" style={{ padding: '30px' }}>
             <h3>Publish Success Story</h3>
@@ -4329,6 +4653,250 @@ const AdminDashboard = ({ authFetch }) => {
                       <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.reviewText}</p>
                     </div>
                     <button className="btn-secondary" style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '6px 12px', fontSize: '12px' }} onClick={() => handleDeleteReview(r._id)}>Delete</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'pending' && (
+        <div className="glass-panel" style={{ padding: '30px' }}>
+          <h3>Pending Student Profiles Queue</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px' }}>
+            Verify student profile metadata and transaction proofs before approving their premium access.
+          </p>
+
+          {pendingStudents.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>No pending registrations found.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginTop: '10px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                    <th style={{ padding: '12px' }}>Name</th>
+                    <th style={{ padding: '12px' }}>Father's Name</th>
+                    <th style={{ padding: '12px' }}>Contact Details</th>
+                    <th style={{ padding: '12px' }}>City & Religion</th>
+                    <th style={{ padding: '12px' }}>Plan Details</th>
+                    <th style={{ padding: '12px' }}>Receipt / Trx ID</th>
+                    <th style={{ padding: '12px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody style={{ fontSize: '13px' }}>
+                  {pendingStudents.map((s) => (
+                    <tr key={s._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>
+                        <div>{s.name}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{s.email}</div>
+                      </td>
+                      <td style={{ padding: '12px' }}>{s.fatherName || '-'}</td>
+                      <td style={{ padding: '12px' }}>
+                        <div>WA: {s.waNumber || '-'}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Father: {s.fatherNumber || '-'}</div>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <div>{s.city || '-'}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{s.religion || '-'}</div>
+                      </td>
+                      <td style={{ padding: '12px', textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: 'var(--gold)' }}>
+                        {s.planName || 'mdcat/ecat'}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <div>Trx: {s.transactionId || 'N/A'}</div>
+                        {s.receiptImage ? (
+                          <ReceiptThumbnail
+                            studentId={s._id}
+                            authFetch={authFetch}
+                            onClick={(url) => setActiveReceiptUrl({ url, id: s._id, isRegistrationReceipt: true })}
+                          />
+                        ) : (
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>No file proof</div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => handleApproveStudent(s._id)}
+                            className="btn-primary"
+                            style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--success)', borderColor: 'var(--success)' }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectStudent(s._id)}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'payments-config' && (
+        <div className="responsive-grid-1-15">
+          {/* Create Payment Method Form */}
+          <div className="glass-panel" style={{ padding: '30px' }}>
+            <h3>Add New Payment Account</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px' }}>
+              Add a new dynamic fee payment details account displayed to students.
+            </p>
+
+            {pmMsg && (
+              <p style={{
+                fontSize: '13px',
+                color: pmMsg.includes('success') ? 'var(--success)' : 'var(--danger)',
+                background: pmMsg.includes('success') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                padding: '10px',
+                borderRadius: '6px',
+                marginBottom: '15px'
+              }}>
+                {pmMsg}
+              </p>
+            )}
+
+            <form onSubmit={handleCreatePaymentMethod} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div className="form-group">
+                <label style={{ fontSize: '12px' }}>Account Name / Provider</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  required
+                  placeholder="e.g. EasyPaisa Wallet, Allied Bank Ltd"
+                  value={pmName}
+                  onChange={(e) => setPmName(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontSize: '12px' }}>Account Holder Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  required
+                  placeholder="e.g. Rizwan Ali"
+                  value={pmHolder}
+                  onChange={(e) => setPmHolder(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontSize: '12px' }}>Account Number</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  required
+                  placeholder="e.g. 03009314064"
+                  value={pmNumber}
+                  onChange={(e) => setPmNumber(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontSize: '12px' }}>Amount to Charge (PKR)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  required
+                  placeholder="e.g. 5000"
+                  value={pmAmount}
+                  onChange={(e) => setPmAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontSize: '12px' }}>Extra Instructions (Optional)</label>
+                <textarea
+                  className="form-input"
+                  style={{ minHeight: '80px' }}
+                  placeholder="Instructions for students (e.g. transfer fee and copy transaction ID)"
+                  value={pmDetails}
+                  onChange={(e) => setPmDetails(e.target.value)}
+                />
+              </div>
+
+              <button type="submit" className="btn-primary" style={{ padding: '10px 0', fontSize: '13px' }}>
+                Add Payment Account
+              </button>
+            </form>
+          </div>
+
+          {/* Active Payment Methods List */}
+          <div className="glass-panel" style={{ padding: '30px' }}>
+            <h3>Configure Active Payment Accounts ({paymentMethods.length})</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px' }}>
+              Enable, disable, or delete payment account details.
+            </p>
+
+            {paymentMethods.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>No payment methods found.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {paymentMethods.map(m => (
+                  <div key={m._id} style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontFamily: 'var(--font-heading)' }}>{m.name}</h4>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {m._id}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: m.isActive ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                          color: m.isActive ? 'var(--success)' : 'var(--danger)'
+                        }}>
+                          {m.isActive ? 'Active' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
+                      <div><strong>Holder:</strong> {m.accountHolderName}</div>
+                      <div><strong>No:</strong> {m.accountNumber}</div>
+                      <div><strong>Fee:</strong> Rs. {m.amount}</div>
+                    </div>
+                    {m.extraDetails && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.01)', padding: '8px', borderRadius: '6px' }}>
+                        <strong>Instructions:</strong> {m.extraDetails}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                      <button
+                        onClick={() => handleTogglePaymentMethod(m._id, m.isActive)}
+                        className="btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        {m.isActive ? 'Disable' : 'Enable'}
+                      </button>
+                      <button
+                        onClick={() => handleDeletePaymentMethod(m._id)}
+                        className="btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -4573,6 +5141,81 @@ const AdminDashboard = ({ authFetch }) => {
             <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '15px' }}>
               <button onClick={() => setActiveReviewAttempt(null)} className="btn-secondary" style={{ padding: '8px 20px' }}>
                 Close Review
+              </button>
+            </div>
+          </div>
+        </div>
+      {/* Pop up Receipt Viewer Box */}
+      {activeReceiptUrl && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div className="glass-panel" style={{
+            width: '100%',
+            maxWidth: '650px',
+            background: 'var(--bg-card)',
+            padding: '30px',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            border: '1px solid var(--border-color)'
+          }}>
+            <button
+              onClick={() => setActiveReceiptUrl(null)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                fontSize: '24px',
+                cursor: 'pointer'
+              }}
+            >
+              ×
+            </button>
+            <div>
+              <h3 style={{ fontSize: '20px' }}>Receipt Transaction Proof</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Audit the submitted slip voucher to verify authenticity.</p>
+            </div>
+            
+            <div style={{ width: '100%', maxHeight: '450px', overflowY: 'auto', background: 'rgba(0,0,0,0.1)', borderRadius: '10px', display: 'flex', justifyContent: 'center', padding: '10px' }}>
+              <img src={activeReceiptUrl.url} alt="receipt proof" style={{ maxWidth: '100%', maxHeight: '430px', objectFit: 'contain', borderRadius: '8px' }} />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '10px' }}>
+              <button
+                onClick={() => {
+                  handleRejectStudent(activeReceiptUrl.id);
+                  setActiveReceiptUrl(null);
+                }}
+                className="btn-secondary"
+                style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '10px 20px', cursor: 'pointer' }}
+              >
+                Reject & Remove
+              </button>
+              <button
+                onClick={() => {
+                  handleApproveStudent(activeReceiptUrl.id);
+                  setActiveReceiptUrl(null);
+                }}
+                className="btn-primary"
+                style={{ background: 'var(--success)', padding: '10px 20px', cursor: 'pointer' }}
+              >
+                Approve Student
               </button>
             </div>
           </div>

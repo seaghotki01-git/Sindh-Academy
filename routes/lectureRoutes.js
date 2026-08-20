@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const lectureController = require('../controllers/lectureController');
+const adminController = require('../controllers/adminController');
 const { protect, authorizeRoles, optionalProtect } = require('../middleware/authMiddleware');
 
 router.get('/lectures', optionalProtect, lectureController.getLectures);
@@ -14,5 +15,8 @@ router.post('/stream/:id/heartbeat', protect, lectureController.logHeartbeat);
 router.get('/reviews', optionalProtect, lectureController.getReviews);
 router.post('/reviews', protect, authorizeRoles('clerk', 'admin'), lectureController.createReview);
 router.delete('/reviews/:id', protect, authorizeRoles('clerk', 'admin'), lectureController.deleteReview);
+
+// Public payment methods info for registration modal
+router.get('/payment-methods', adminController.getActivePaymentMethods);
 
 module.exports = router;

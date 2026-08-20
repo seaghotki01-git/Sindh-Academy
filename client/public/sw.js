@@ -1,9 +1,10 @@
-const CACHE_NAME = 'sea-cache-v1';
+const CACHE_NAME = 'sea-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/assests/sea_logo.png',
-  '/assests/sea_favicon.png'
+  '/assests/sea_favicon.png',
+  '/assests/sae-favicon-512.png'
 ];
 
 // Install Event

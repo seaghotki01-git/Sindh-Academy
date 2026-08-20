@@ -18,7 +18,7 @@ exports.searchMCQ = async (req, res) => {
     // Find questions matching query
     const questions = await Question.find({ $text: { $search: q } });
 
-    // Security check: locate active monthly exams student hasn't submitted yet
+    // Security check 1: locate active monthly exams student hasn't submitted yet
     const unpaidOrActiveExams = await Exam.find({
       $or: [
         { isDemo: false, windowClose: { $gt: Date.now() } } // Active monthly test
@@ -40,10 +40,19 @@ exports.searchMCQ = async (req, res) => {
       }
     }
 
+    // Security check 2: find all premium (non-demo) exam question IDs
+    const premiumExams = await Exam.find({ isDemo: false });
+    const premiumQuestionIds = new Set();
+    premiumExams.forEach(exam => {
+      exam.questions.forEach((id) => premiumQuestionIds.add(id.toString()));
+    });
+
+    const isPaidUser = req.user && req.user.isPaid;
+
     // Process questions output: hide key answers if locked
     const sanitizedQuestions = questions.map((q) => {
       const qObj = q.toObject();
-      if (activeExamQuestionIds.has(qObj._id.toString())) {
+      if (activeExamQuestionIds.has(qObj._id.toString()) || (premiumQuestionIds.has(qObj._id.toString()) && !isPaidUser)) {
         // Strip out the answer key and explanation
         delete qObj.correctOption;
         delete qObj.explanation;
@@ -157,6 +166,13 @@ exports.submitMock = async (req, res) => {
     const exam = await Exam.findById(examId).populate('questions');
     if (!exam) {
       return res.status(404).json({ success: false, message: 'Exam not found' });
+    }
+
+    // Security check: premium mock exam requires authenticated paid access
+    if (!exam.isDemo) {
+      if (!req.user || !req.user.isPaid) {
+        return res.status(403).json({ success: false, message: 'Access Denied: Premium mock exam. Payment verification required.' });
+      }
     }
 
     // Check duplicate submissions (only for authenticated users)
@@ -668,7 +684,7 @@ exports.getAttemptDetails = async (req, res) => {
 exports.getExamAttempts = async (req, res) => {
   try {
     const attempts = await Attempt.find({ examId: req.params.examId })
-      .populate('studentId', 'name email')
+      .populate('studentId', 'name email isPaid')
       .sort('-score') // Sort by highest score first (leaderboard rank!)
       .exec();
 

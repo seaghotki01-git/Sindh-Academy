@@ -7,6 +7,7 @@ import { Navbar } from './components/Navbar';
 import { ParticleBackground } from './components/ParticleBackground';
 import { Home } from './views/Home';
 import { Login } from './views/Login';
+import { Register } from './views/Register';
 import { Dashboard, StudentDashboardView, ClerkDashboardView, TeacherDashboardView, AdminDashboardView } from './views/Dashboard';
 import { ExamEngine } from './views/ExamEngine';
 import { About } from './views/About';
@@ -31,6 +32,7 @@ const AppLayout = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/search-mcqs" element={<SearchMcqs />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/student" element={<StudentDashboardView />} />
           <Route path="/dashboard/clerk" element={<ClerkDashboardView />} />

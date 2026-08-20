@@ -1,5 +1,7 @@
+const fs = require('fs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
 const { sendVerificationEmail } = require('../services/emailService');
@@ -35,13 +37,46 @@ const setRefreshTokenCookie = (res, token) => {
 // @desc    Register user
 // @route   POST /api/v1/auth/register
 // @access  Public
+const verifyMagicNumbers = (filePath) => {
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(8);
+    fs.readSync(fd, buffer, 0, 8, 0);
+    fs.closeSync(fd);
+
+    const hex = buffer.toString('hex').toUpperCase();
+
+    // PNG: 89504E470D0A1A0A
+    if (hex.startsWith('89504E47')) {
+      return 'image/png';
+    }
+    // JPEG/JPG: FFD8FF
+    if (hex.startsWith('FFD8FF')) {
+      return 'image/jpeg';
+    }
+    // PDF: 25504446 (%PDF)
+    if (hex.startsWith('25504446')) {
+      return 'application/pdf';
+    }
+
+    return null; // Unknown signature
+  } catch (err) {
+    console.error('Magic number read error:', err);
+    return null;
+  }
+};
+
+// @desc    Register user
+// @route   POST /api/v1/auth/register
+// @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, fatherName, waNumber, city, religion, fatherNumber, planName, paymentMethod, transactionId } = req.body;
 
     // Enforce Password Security Policy
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
+      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&).'
@@ -51,15 +86,23 @@ exports.register = async (req, res) => {
     // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
+      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       // Return vague message to prevent account enumeration
       return res.status(400).json({ success: false, message: 'Invalid Identification Credentials Provided.' });
     }
 
-    // Create verification token
-    const token = crypto.randomBytes(32).toString('hex');
-    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Verify magic numbers of file if uploaded
+    let receiptImage = null;
+    if (req.file) {
+      const verifiedMime = verifyMagicNumbers(req.file.path);
+      if (!verifiedMime) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ success: false, message: 'Security check failed: Invalid file binary signature.' });
+      }
+      receiptImage = req.file.path;
+    }
 
-    // Create user (default student, unpaid, unverified)
+    // Create user (default student, unpaid, unverified until clerk/admin approves)
     const user = await User.create({
       name,
       email,
@@ -67,25 +110,27 @@ exports.register = async (req, res) => {
       role: 'student',
       isPaid: false,
       isVerified: false,
-      verificationToken: token,
-      verificationTokenExpires: tokenExpires
+      fatherName: fatherName || '',
+      waNumber: waNumber || '',
+      city: city || '',
+      religion: religion || '',
+      fatherNumber: fatherNumber || '',
+      planName: planName || 'mdcat/ecat',
+      paymentMethod: paymentMethod || '',
+      transactionId: transactionId || '',
+      receiptImage,
+      uploadedAt: receiptImage ? Date.now() : null
     });
-
-    const verifyUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/verify-email?token=${token}`;
-    
-    // Dispatch actual verification email (or log to console in simulation fallback)
-    try {
-      await sendVerificationEmail(email, name, verifyUrl);
-    } catch (mailErr) {
-      console.error('[EMAIL ERROR] Failed to dispatch email. Continuing registration registration:', mailErr.message);
-    }
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Please verify your email using the link sent.'
+      message: 'Registration successful. pay your fee and contact academy administration for account approval to get premium access.'
     });
   } catch (error) {
     console.error(error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -104,9 +149,8 @@ exports.login = async (req, res) => {
     if (user) {
       isMatch = await user.matchPassword(password);
     } else {
-      // Fake compare to consume CPU time equivalent to bcrypt
-      const fakeSalt = await crypto.randomBytes(16).toString('hex');
-      await crypto.pbkdf2Sync('fake_password', fakeSalt, 10000, 64, 'sha512');
+      // Fake compare to consume CPU time equivalent to bcrypt without blocking the thread
+      await bcrypt.compare('fake_password', '$2b$10$abcdefghijklmnopqrstuv1234567890abcdefghijklmnopqrstuv');
     }
 
     if (!user || !isMatch) {
@@ -114,7 +158,7 @@ exports.login = async (req, res) => {
     }
 
     if (!user.isVerified) {
-      return res.status(403).json({ success: false, message: 'Please verify your email before logging in.' });
+      return res.status(403).json({ success: false, message: 'pay your fee and contact academy administration for account approval to get premium access' });
     }
 
     // Access Token and Refresh Token generation
