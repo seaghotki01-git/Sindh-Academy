@@ -184,6 +184,22 @@ Please verify and approve my account.`;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '90vh', padding: '40px 20px' }}>
+      <style>{`
+        .register-grid {
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 20px !important;
+          width: 100% !important;
+        }
+        @media (max-width: 768px) {
+          .register-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .register-grid .form-group {
+            grid-column: span 1 !important;
+          }
+        }
+      `}</style>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '750px', padding: '40px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: '32px', color: 'var(--gold)', marginBottom: '8px' }}>Create Student Profile</h2>
@@ -201,7 +217,7 @@ Please verify and approve my account.`;
 
           <h3 style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px', color: 'var(--gold)', fontSize: '18px' }}>1. Personal Profile</h3>
 
-          <div className="responsive-grid">
+          <div className="register-grid">
             <div className="form-group">
               <label>Full Name</label>
               <div style={{ position: 'relative' }}>
@@ -252,7 +268,7 @@ Please verify and approve my account.`;
 
           <h3 style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px', color: 'var(--gold)', fontSize: '18px', marginTop: '10px' }}>2. Contact & Demographics</h3>
 
-          <div className="responsive-grid">
+          <div className="register-grid">
             <div className="form-group">
               <label>WhatsApp Number</label>
               <div style={{ position: 'relative' }}>
@@ -304,7 +320,7 @@ Please verify and approve my account.`;
               </button>
             </div>
 
-            <div className="responsive-grid">
+            <div className="register-grid">
               <div className="form-group">
                 <label>Payment Method Used</label>
                 <input type="text" className="form-input" placeholder="e.g. EasyPaisa, JazzCash, Allied Bank" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} />
