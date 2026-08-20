@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
+const ContactMessage = require('../models/ContactMessage');
 const { sendVerificationEmail } = require('../services/emailService');
 
 // Generate access token (short-lived: 15m)
@@ -435,3 +436,33 @@ exports.getStudents = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+// @desc    Submit a contact form query
+// @route   POST /api/v1/auth/contact
+// @access  Public
+exports.submitContactMessage = async (req, res) => {
+  try {
+    const { name, email, whatsapp, subject, message } = req.body;
+    if (!name || !email || !whatsapp || !subject || !message) {
+      return res.status(400).json({ success: false, message: 'Please provide all fields' });
+    }
+
+    const newMessage = await ContactMessage.create({
+      name,
+      email,
+      whatsapp,
+      subject,
+      message
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Your message has been submitted successfully.',
+      data: newMessage
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error submitting message' });
+  }
+};
+

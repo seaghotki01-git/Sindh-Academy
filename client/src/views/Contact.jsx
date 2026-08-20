@@ -3,7 +3,15 @@ import { Mail, Phone, MapPin, MessageCircle, HelpCircle } from 'lucide-react';
 
 export const Contact = () => {
   const [msgSent, setMsgSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [activeFaq, setActiveFaq] = useState(null);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const faqs = [
     {
@@ -24,11 +32,35 @@ export const Contact = () => {
     }
   ];
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    setMsgSent(true);
-    e.target.reset();
-    setTimeout(() => setMsgSent(false), 5000);
+    setMsgSent(false);
+    setErrorMsg('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/v1/auth/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, whatsapp, subject, message })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsgSent(true);
+        setName('');
+        setEmail('');
+        setWhatsapp('');
+        setSubject('');
+        setMessage('');
+      } else {
+        setErrorMsg(data.message || 'Failed to submit contact message.');
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Error contacting the server. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -110,30 +142,48 @@ export const Contact = () => {
 
         {/* Support Mail form card */}
         <form onSubmit={handleSend} className="glass-panel" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h2 style={{ fontSize: '24px', fontFamily: 'var(--font-heading)' }}>Send Email Inquiry</h2>
+          <h2 style={{ fontSize: '24px', fontFamily: 'var(--font-heading)' }}>Send Inquiry</h2>
           
           {msgSent && (
             <div style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--success)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
-              Your message was delivered successfully. Support staff will reply to your registered email address.
+              Your message was delivered successfully. Sindh Academy staff will review it.
+            </div>
+          )}
+
+          {errorMsg && (
+            <div style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '12px', borderRadius: '8px', fontSize: '13px' }}>
+              {errorMsg}
             </div>
           )}
 
           <div className="form-group">
             <label>Full Name</label>
-            <input type="text" required className="form-input" placeholder="e.g. khan" />
+            <input type="text" required className="form-input" placeholder="e.g. khan" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
           <div className="form-group">
             <label>Registered Email Address</label>
-            <input type="email" required className="form-input" placeholder="e.g. khan@email.com" />
+            <input type="email" required className="form-input" placeholder="e.g. khan@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label>WhatsApp Number</label>
+            <input type="text" required className="form-input" placeholder="e.g. +92 300 1234567" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label>Subject</label>
+            <input type="text" required className="form-input" placeholder="e.g. Course Enrollment Enquiry" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
 
           <div className="form-group">
             <label>Message Content</label>
-            <textarea required className="form-input" style={{ minHeight: '120px' }} placeholder="Specify your questions regarding prep course access..." />
+            <textarea required className="form-input" style={{ minHeight: '120px' }} placeholder="Specify your questions regarding prep course access..." value={message} onChange={(e) => setMessage(e.target.value)} />
           </div>
 
-          <button type="submit" className="btn-primary" style={{ width: '100%' }}>Send Message</button>
+          <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
+            {loading ? 'Sending...' : 'Send Message'}
+          </button>
         </form>
       </section>
 

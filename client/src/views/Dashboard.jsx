@@ -3843,7 +3843,7 @@ const AdminDashboard = ({ authFetch }) => {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [logs, setLogs] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
+  const [contactMessages, setContactMessages] = useState([]);
   const [msg, setMsg] = useState('');
   
   // User edit state
@@ -4059,24 +4059,42 @@ const AdminDashboard = ({ authFetch }) => {
     }
   };
 
+  const handleDeleteContactMessage = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this inquiry message?')) return;
+    try {
+      const res = await authFetch(`/api/v1/admin/contact-messages/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Inquiry message deleted.');
+        loadAllAdminData();
+      } else {
+        alert(data.message || 'Failed to delete message.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const loadAllAdminData = async () => {
     try {
-      const [statsRes, usersRes, logsRes, analyticsRes, reviewsRes, examsRes, pendingRes, pmsRes] = await Promise.all([
+      const [statsRes, usersRes, logsRes, contactsRes, reviewsRes, examsRes, pendingRes, pmsRes] = await Promise.all([
         authFetch('/api/v1/admin/stats').catch(e => { console.error(e); return null; }),
         authFetch('/api/v1/admin/users').catch(e => { console.error(e); return null; }),
         authFetch('/api/v1/admin/logs').catch(e => { console.error(e); return null; }),
-        authFetch('/api/v1/admin/analytics/grades').catch(e => { console.error(e); return null; }),
+        authFetch('/api/v1/admin/contact-messages').catch(e => { console.error(e); return null; }),
         authFetch('/api/v1/resources/reviews').catch(e => { console.error(e); return null; }),
         authFetch('/api/v1/exams').catch(e => { console.error(e); return null; }),
         authFetch('/api/v1/admin/pending-students').catch(e => { console.error(e); return null; }),
         authFetch('/api/v1/admin/payment-methods').catch(e => { console.error(e); return null; })
       ]);
 
-      const [statsData, usersData, logsData, analyticsData, reviewsData, examsData, pendingData, pmsData] = await Promise.all([
+      const [statsData, usersData, logsData, contactsData, reviewsData, examsData, pendingData, pmsData] = await Promise.all([
         statsRes ? statsRes.json().catch(() => null) : null,
         usersRes ? usersRes.json().catch(() => null) : null,
         logsRes ? logsRes.json().catch(() => null) : null,
-        analyticsRes ? analyticsRes.json().catch(() => null) : null,
+        contactsRes ? contactsRes.json().catch(() => null) : null,
         reviewsRes ? reviewsRes.json().catch(() => null) : null,
         examsRes ? examsRes.json().catch(() => null) : null,
         pendingRes ? pendingRes.json().catch(() => null) : null,
@@ -4086,7 +4104,7 @@ const AdminDashboard = ({ authFetch }) => {
       if (statsData && statsData.success) setStats(statsData.stats);
       if (usersData && usersData.success) setUsers(usersData.users);
       if (logsData && logsData.success) setLogs(logsData.logs);
-      if (analyticsData && analyticsData.success) setAnalytics(analyticsData.analytics);
+      if (contactsData && contactsData.success) setContactMessages(contactsData.messages || []);
       if (reviewsData && reviewsData.success) setReviews(reviewsData.reviews);
       if (examsData && examsData.success) setExams(examsData.exams);
       if (pendingData && pendingData.success) setPendingStudents(pendingData.pending);
@@ -4193,8 +4211,8 @@ const AdminDashboard = ({ authFetch }) => {
         <button onClick={() => setTab('users')} className={tab === 'users' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px' }}>
           User Accounts CRUD
         </button>
-        <button onClick={() => setTab('analytics')} className={tab === 'analytics' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px' }}>
-          Mock Grade Analytics
+        <button onClick={() => setTab('contact-messages')} className={tab === 'contact-messages' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px', background: 'rgba(59, 130, 246, 0.12)', color: 'var(--info)' }}>
+          Contact Inquiries ({contactMessages.length})
         </button>
         <button onClick={() => setTab('logs')} className={tab === 'logs' ? 'btn-primary' : 'btn-secondary'} style={{ padding: '8px 16px' }}>
           Audit Mutation Logs
@@ -4356,114 +4374,63 @@ const AdminDashboard = ({ authFetch }) => {
         </div>
       )}
 
-      {/* 3. MOCK GRADE ANALYTICS */}
-      {tab === 'analytics' && (
-        <div className="responsive-grid-1-15">
-          
-          {/* SVG Telemetry Chart */}
-          <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h3>Global Mock Exam Performance</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
-              Visual indicators showing entry tests performance ratios (low, average, and high scores).
-            </p>
+      {/* 3. CONTACT INQUIRIES */}
+      {tab === 'contact-messages' && (
+        <div className="glass-panel" style={{ padding: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h3>Student & Visitor Contact Inquiries</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                View and manage submitted contact queries containing details of WhatsApp numbers and subjects.
+              </p>
+            </div>
+            <div style={{ padding: '8px 16px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--info)', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+              Total Queries: {contactMessages.length}
+            </div>
+          </div>
 
-            {analytics && analytics.globalStats.totalAttempts > 0 ? (
-              <div>
-                <svg viewBox="0 0 400 220" style={{ width: '100%', maxHeight: '220px', background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '15px' }}>
-                  {/* Grid Lines */}
-                  <line x1="40" y1="20" x2="380" y2="20" stroke="rgba(255,255,255,0.06)" />
-                  <line x1="40" y1="70" x2="380" y2="70" stroke="rgba(255,255,255,0.06)" />
-                  <line x1="40" y1="120" x2="380" y2="120" stroke="rgba(255,255,255,0.06)" />
-                  <line x1="40" y1="170" x2="380" y2="170" stroke="rgba(255,255,255,0.06)" />
-                  
-                  {/* Bars */}
-                  {/* Low Score Bar */}
-                  <rect x="70" y={170 - (analytics.globalStats.low * 1.3)} width="50" height={analytics.globalStats.low * 1.3} fill="url(#lowGrad)" rx="4" />
-                  <text x="95" y={160 - (analytics.globalStats.low * 1.3)} fill="#ef4444" fontSize="11" textAnchor="middle" fontWeight="bold">{analytics.globalStats.low}%</text>
-                  <text x="95" y="195" fill="var(--text-secondary)" fontSize="11" textAnchor="middle">Low Score</text>
+          {contactMessages.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '20px 0' }}>No contact submissions found in database.</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+              {contactMessages.map((msg) => (
+                <div key={msg._id} className="glass-panel text-pop-in" style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '15px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h4 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{msg.name}</h4>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{msg.email}</span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteContactMessage(msg._id)}
+                      className="btn-secondary"
+                      style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)', padding: '5px 12px', fontSize: '12px', cursor: 'pointer' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
 
-                  {/* Average Score Bar */}
-                  <rect x="175" y={170 - (analytics.globalStats.avg * 1.3)} width="50" height={analytics.globalStats.avg * 1.3} fill="url(#avgGrad)" rx="4" />
-                  <text x="200" y={160 - (analytics.globalStats.avg * 1.3)} fill="#3b82f6" fontSize="11" textAnchor="middle" fontWeight="bold">{analytics.globalStats.avg}%</text>
-                  <text x="200" y="195" fill="var(--text-secondary)" fontSize="11" textAnchor="middle">Avg Score</text>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                    <div>
+                      <strong style={{ color: 'var(--gold)' }}>Subject:</strong> {msg.subject}
+                    </div>
+                    <div>
+                      <strong style={{ color: 'var(--accent)' }}>WhatsApp Number:</strong>{' '}
+                      <a href={`https://wa.me/${msg.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+                        {msg.whatsapp}
+                      </a>
+                    </div>
+                    <div style={{ marginTop: '5px', background: 'rgba(0,0,0,0.15)', padding: '12px', borderRadius: '6px', whiteSpace: 'pre-wrap', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                      {msg.message}
+                    </div>
+                  </div>
 
-                  {/* High Score Bar */}
-                  <rect x="280" y={170 - (analytics.globalStats.high * 1.3)} width="50" height={analytics.globalStats.high * 1.3} fill="url(#highGrad)" rx="4" />
-                  <text x="305" y={160 - (analytics.globalStats.high * 1.3)} fill="#10b981" fontSize="11" textAnchor="middle" fontWeight="bold">{analytics.globalStats.high}%</text>
-                  <text x="305" y="195" fill="var(--text-secondary)" fontSize="11" textAnchor="middle">High Score</text>
-
-                  {/* Gradients */}
-                  <defs>
-                    <linearGradient id="lowGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ef4444" />
-                      <stop offset="100%" stopColor="#7f1d1d" />
-                    </linearGradient>
-                    <linearGradient id="avgGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="100%" stopColor="#1e3a8a" />
-                    </linearGradient>
-                    <linearGradient id="highGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#064e3b" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-
-                <div style={{ marginTop: '20px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                  <span>Total Exam Attempts Logged:</span>
-                  <strong>{analytics.globalStats.totalAttempts}</strong>
+                  <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Submitted at: {new Date(msg.createdAt).toLocaleString()}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No exam completion analytics compiled yet.</p>
-            )}
-          </div>
-
-          {/* Subject Wise Comparison table */}
-          <div className="glass-panel" style={{ padding: '30px' }}>
-            <h3>Subject Diagnostic Comparisons</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px' }}>
-              Overview of student average scores across specific core testing subjects.
-            </p>
-
-            {analytics && analytics.studentSubjectAverages.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                    <th style={{ padding: '10px 6px' }}>Student</th>
-                    <th style={{ padding: '10px 6px' }}>Biology</th>
-                    <th style={{ padding: '10px 6px' }}>Physics</th>
-                    <th style={{ padding: '10px 6px' }}>Chemistry</th>
-                    <th style={{ padding: '10px 6px' }}>English</th>
-                  </tr>
-                </thead>
-                <tbody style={{ fontSize: '12px' }}>
-                  {analytics.studentSubjectAverages.map(std => (
-                    <tr key={std.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '10px 6px' }}>
-                        <strong style={{ display: 'block' }}>{std.name}</strong>
-                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{std.email}</span>
-                      </td>
-                      <td style={{ padding: '10px 6px', fontWeight: 'bold', color: std.averages.Biology === null ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                        {std.averages.Biology !== null ? `${std.averages.Biology}%` : '-'}
-                      </td>
-                      <td style={{ padding: '10px 6px', fontWeight: 'bold', color: std.averages.Physics === null ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                        {std.averages.Physics !== null ? `${std.averages.Physics}%` : '-'}
-                      </td>
-                      <td style={{ padding: '10px 6px', fontWeight: 'bold', color: std.averages.Chemistry === null ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                        {std.averages.Chemistry !== null ? `${std.averages.Chemistry}%` : '-'}
-                      </td>
-                      <td style={{ padding: '10px 6px', fontWeight: 'bold', color: std.averages.English === null ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                        {std.averages.English !== null ? `${std.averages.English}%` : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No comparisons logged.</p>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -99,8 +99,8 @@ export const Home = () => {
         </p>
 
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '10px' }}>
-          <Link to="/login" className="btn-primary" style={{ padding: '14px 28px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>Portal Login</span>
+          <Link to="/register" className="btn-primary" style={{ padding: '14px 28px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>Register Yourself</span>
             <ArrowRight size={18} />
           </Link>
           <Link to="/mock-tests" className="btn-secondary" style={{ padding: '14px 28px', textDecoration: 'none' }}>

@@ -12,6 +12,9 @@ router.get('/registration-receipt/:id', protect, authorizeRoles('clerk', 'admin'
 // Lock down the remaining routes to Admin role only
 router.use(protect, authorizeRoles('admin'));
 
+router.get('/contact-messages', adminController.getContactMessages);
+router.delete('/contact-messages/:id', adminController.deleteContactMessage);
+
 router.get('/stats', adminController.getStats);
 router.get('/users', adminController.getUsers);
 router.put('/users/:id', adminController.updateUser);

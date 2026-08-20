@@ -5,6 +5,7 @@ const AuditLog = require('../models/AuditLog');
 const Attempt = require('../models/Attempt');
 const Exam = require('../models/Exam');
 const PaymentMethod = require('../models/PaymentMethod');
+const ContactMessage = require('../models/ContactMessage');
 const { grantFolderAccess, revokeFolderAccess } = require('../services/googleDriveService');
 
 // @desc    Get dashboard telemetry statistics
@@ -490,5 +491,43 @@ exports.getRegistrationReceiptImage = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// @desc    Get all contact messages
+// @route   GET /api/v1/admin/contact-messages
+// @access  Private (Admin/Clerk)
+exports.getContactMessages = async (req, res) => {
+  try {
+    const messages = await ContactMessage.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, messages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error retrieving contact messages' });
+  }
+};
+
+// @desc    Delete a contact message
+// @route   DELETE /api/v1/admin/contact-messages/:id
+// @access  Private (Admin)
+exports.deleteContactMessage = async (req, res) => {
+  try {
+    const message = await ContactMessage.findById(req.params.id);
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+    await ContactMessage.deleteOne({ _id: req.params.id });
+
+    // Log the deletion audit
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'DELETE_CONTACT_MESSAGE',
+      details: `Deleted contact message from ${message.email} subject: ${message.subject}`
+    });
+
+    res.status(200).json({ success: true, message: 'Contact message deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error deleting message' });
   }
 };

@@ -12,7 +12,7 @@ export const Register = () => {
   const [religion, setReligion] = useState('');
   const [fatherNumber, setFatherNumber] = useState('');
   const [planName, setPlanName] = useState('mdcat/ecat');
-  
+
   // Payment tracking fields
   const [paymentMethod, setPaymentMethod] = useState('');
   const [transactionId, setTransactionId] = useState('');
@@ -155,7 +155,7 @@ Please verify and approve my account.`;
           <div>
             <h2 style={{ fontSize: '28px', color: 'var(--gold)', marginBottom: '12px' }}>Registration Submitted!</h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              Your account has been successfully created and queued for manual approval by the academy clerks. 
+              Your account has been successfully created and queued for manual approval by the academy clerks.
               To accelerate verification, please share your details via WhatsApp.
             </p>
           </div>
@@ -198,9 +198,9 @@ Please verify and approve my account.`;
         )}
 
         <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           <h3 style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px', color: 'var(--gold)', fontSize: '18px' }}>1. Personal Profile</h3>
-          
+
           <div className="responsive-grid">
             <div className="form-group">
               <label>Full Name</label>
@@ -235,7 +235,7 @@ Please verify and approve my account.`;
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </span>
               </div>
-              
+
               {password && (
                 <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
@@ -285,8 +285,8 @@ Please verify and approve my account.`;
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label>Class/Preparation Program</label>
               <select className="form-input" value={planName} onChange={(e) => setPlanName(e.target.value)}>
-                <option value="mdcat/ecat">MDCAT & ECAT Entry Test Prep Portal (Fee: 5000 PKR)</option>
-                <option value="coaching">Matric & Intermediate Board Exams Coaching (Fee: 4000 PKR)</option>
+                <option value="mdcat/ecat">MDCAT & ECAT Entry Test Prep Portal </option>
+                <option value="coaching">Matric & Intermediate Board Exams Coaching </option>
               </select>
             </div>
           </div>
@@ -387,7 +387,7 @@ Please verify and approve my account.`;
                 )}
               </div>
             )}
-            
+
             <button onClick={() => setPaymentModalOpen(false)} className="btn-gold" style={{ width: '100%', padding: '12px', marginTop: '10px' }}>
               I've Copied Details
             </button>
