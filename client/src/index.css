@@ -551,23 +551,23 @@ body, h1, h2, h3, h4, h5, h6, p, span, .glass-panel, .form-input, .btn-primary, 
 /* Responsive Grid Utility Classes */
 .responsive-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
 .responsive-grid-1-15 {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   gap: 30px;
 }
 
 .responsive-grid-1-2 {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 30px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 850px) {
   .responsive-grid {
     grid-template-columns: 1fr !important;
   }

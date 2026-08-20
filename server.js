@@ -77,15 +77,27 @@ app.use('/api/v1/admin', require('./routes/adminRoutes'));
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/dist')));
-  
-  app.get('*', (req, res) => {
-    // Skip API routes so they don't get intercepted by catch-all
-    if (req.originalUrl.startsWith('/api/')) {
-      return res.status(404).json({ success: false, message: 'API Route Not Found' });
-    }
-    res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html'));
-  });
+  const fs = require('fs');
+  const distPath = path.join(__dirname, 'client/dist');
+  const indexPath = path.resolve(distPath, 'index.html');
+
+  if (fs.existsSync(indexPath)) {
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(404).json({ success: false, message: 'API Route Not Found' });
+      }
+      res.sendFile(indexPath);
+    });
+  } else {
+    // Fallback if frontend is hosted separately (e.g. on Vercel)
+    app.get('*', (req, res) => {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(404).json({ success: false, message: 'API Route Not Found' });
+      }
+      res.json({ success: true, message: 'Sindh Educational Academy API Active (Production).' });
+    });
+  }
 } else {
   // Root route for initial verification in development
   app.get('/', (req, res) => {
